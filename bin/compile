@@ -38,7 +38,7 @@ fi
 echo "-----> Downloading wkhtmltopdf"
 mkdir -p "$CACHE_DIR"
 if [[ ! -e "${CACHE_DIR}/${OUTPUT_FILE}" ]]; then
-    curl -q -L -f -o "/tmp/${OUTPUT_FILE}" "${DOWNLOAD_URL}"
+    curl -s -L -f -o "/tmp/${OUTPUT_FILE}" "${DOWNLOAD_URL}"
     mv "/tmp/${OUTPUT_FILE}" "${CACHE_DIR}/${OUTPUT_FILE}"
 fi
 
