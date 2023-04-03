@@ -1,0 +1,53 @@
+#!/bin/bash
+
+set -euo pipefail
+
+VERSION="0.12.6.1-2"
+
+BUILD_DIR="$1"
+CACHE_DIR="$2"
+# ENV_DIR="$3"
+
+case "$STACK" in
+    "heroku-20")
+        OUTPUT_FILE="wkhtmltox_${VERSION}.focal_amd64.deb"
+        DOWNLOAD_URL="https://github.com/wkhtmltopdf/packaging/releases/download/${VERSION}/${OUTPUT_FILE}"
+        ;;
+    "heroku-22")
+        OUTPUT_FILE="wkhtmltox_${VERSION}.jammy_amd64.deb"
+        DOWNLOAD_URL="https://github.com/wkhtmltopdf/packaging/releases/download/${VERSION}/${OUTPUT_FILE}"
+        ;;
+    *)
+        echo >&2 "Unsupported stack $STACK"
+        exit 1
+        ;;
+esac
+
+if [[ "$(uname -m)" != "x86_64" ]]; then
+    echo >&2 "Unsupported architecture $(uname -m)"
+    exit 1
+fi
+
+WKHTMLTOPDF_DIR="vendor/wkhtmltopdf"
+
+if [[ -e "${BUILD_DIR}/{$WKHTMLTOPDF_DIR}" ]]; then
+    echo "-----> Not extracting wkhtmltopdf, since \$WKHTMLTOPDF_DIR already exists";
+    exit 0
+fi
+
+echo "-----> Downloading wkhtmltopdf"
+mkdir -p "$CACHE_DIR"
+if [[ ! -e "${CACHE_DIR}/${OUTPUT_FILE}" ]]; then
+    curl -q -L -f -o "/tmp/${OUTPUT_FILE}" "${DOWNLOAD_URL}"
+    mv "/tmp/${OUTPUT_FILE}" "${CACHE_DIR}/${OUTPUT_FILE}"
+fi
+
+echo "-----> Extracting wkhtmltopdf to $WKHTMLTOPDF_DIR"
+mkdir -p "${BUILD_DIR}/${WKHTMLTOPDF_DIR}"
+dpkg -x "${CACHE_DIR}/${OUTPUT_FILE}" "${BUILD_DIR}/${WKHTMLTOPDF_DIR}"
+
+echo "-----> Updating environment variables"
+PROFILE_PATH="$BUILD_DIR/.profile.d/wkhtmltopdf.sh"
+mkdir -p "$(dirname "$PROFILE_PATH")"
+echo "export PATH=\"${HOME}/${WKHTMLTOPDF_DIR}/usr/local/bin:\$PATH\"" > "$PROFILE_PATH"
+echo "export LD_LIBRARY_PATH=\"${HOME}/${WKHTMLTOPDF_DIR}/usr/local/lib:\$LD_LIBRARY_PATH\"" >> "$PROFILE_PATH"
