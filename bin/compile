@@ -45,6 +45,9 @@ fi
 echo "-----> Extracting wkhtmltopdf to $WKHTMLTOPDF_DIR"
 mkdir -p "${BUILD_DIR}/${WKHTMLTOPDF_DIR}"
 dpkg -x "${CACHE_DIR}/${OUTPUT_FILE}" "${BUILD_DIR}/${WKHTMLTOPDF_DIR}"
+# strip out wkhtmltoimage since we don't need it and it's statically
+# linked, so this saves us 46MB
+rm "${BUILD_DIR}/${WKHTMLTOPDF_DIR}/usr/local/bin/wkhtmltoimage"
 
 echo "-----> Updating environment variables"
 PROFILE_PATH="$BUILD_DIR/.profile.d/wkhtmltopdf.sh"
